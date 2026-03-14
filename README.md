@@ -47,10 +47,8 @@ FastAPI (REST API — Real Time Predictions)
 ## 🗂️ Project Structure
 ```
 customer-churn-prediction/
-├── notebooks/
-│   └── churn_analysis.ipynb       # Full ML pipeline
+| Churn_analysis.ipynb       # Full ML pipeline
 ├── sql/
-│   ├── create_tables.sql          # Table creation
 │   ├── exploratory_analysis.sql   # 15 analysis queries
 │   └── ml_features_view.sql       # Feature engineering view
 ├── api/
@@ -184,8 +182,8 @@ SHAP values reveal the most important features driving churn predictions:
 ## 👤 Author
 
 **Your Name**
-- LinkedIn: [linkedin.com/in/yourprofile](https://linkedin.com/in/yourprofile)
-- GitHub: [github.com/yourusername](https://github.com/yourusername)
+- LinkedIn: [linkedin.com/in/yourprofile](www.linkedin.com/in/abhishek-khandge)
+- GitHub: [github.com/yourusername](https://github.com/Termu-101)
 
 ---
 
