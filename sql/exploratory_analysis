@@ -1,0 +1,187 @@
+-- Q1  How many customers are on each contract type?
+
+select * from customers
+select * from billing
+select * from services
+
+
+Select 
+Count(customers.customerid) as "Number of Customers",
+billing.contract
+from customers left join billing
+using (customerid)
+group by billing.contract
+
+
+-- Q2 What is the overall churn rate as a percentage?
+
+Select Count(customerid) as "Number of Customers",
+Round(100.0 * Sum(CASE WHEN churn = 'Yes' THEN 1
+ELSE 0
+END ) / Count(customerid), 2) as "Overall Percentage"
+From billing
+
+
+-- Q3 What is the average monthly charges for churned vs non-churned customers?
+
+
+Select 
+CASE WHEN churn = 'Yes' THEN 'Churned' ELSE 'Not Churned' END as "Customer Type",
+Round(AVG(monthlycharges)::numeric,2) as "Average for Churned Customers"
+From billing 
+Group by churn
+
+
+-- Q4 How many senior citizens are there in the dataset?
+
+Select 
+Count(seniorcitizen) as "Count of Senior Citizens"
+From customers
+Where seniorcitizen = 1
+
+-- Q5 What is the most common payment method?
+
+Select 
+max(paymentmethod),
+Count(*)
+From billing
+Group by paymentmethod
+Limit 1
+
+
+-- Q6 What is the churn rate for each contract type?
+
+
+Select
+contract,
+Count(customerid) as "Total Customers",
+SUM(CASE WHEN churn = 'Yes' THEN 1 ELSE 0 END) as "Churn Customers",
+Round(100.0  * SUM(CASE WHEN churn = 'Yes' THEN 1 ELSE 0 END) / count(*), 2) as "Churn Rate"
+from billing
+Group by contract
+
+
+-- Q7 Which internet service type has the highest churn rate?
+
+Select
+internetservice,
+Count(internetservice) as "Number of Customers",
+SUM(CASE WHEN churn = 'Yes' THEN 1 ELSE 0 END) as "Churn Customers",
+Round(100.0  * SUM(CASE WHEN churn = 'Yes' THEN 1 ELSE 0 END) / count(*), 2) as "Churn Rate"
+From services Join billing using (customerid)
+group by internetservice
+
+
+-- Q8 What is the average tenure for customers who churned vs who didn't
+
+
+Select
+Round(AVG(tenure), 2),
+churn
+From customers 
+JOIN billing using (customerid)
+Group by churn
+
+
+-- Q9 How many customers have no additional services (no streaming, no security, no tech support)?
+
+Select 
+Count(customerid)
+from services
+Where streamingtv = 'No' and streamingmovies = 'No' and onlinesecurity = 'No' and techsupport = 'No'
+
+ 
+-- Q10 What is the average monthly charges for each combination of contract type and internet service?
+
+
+Select 
+Round(AVG(monthlycharges)::numeric,2) as "Average Monthly Charge",
+contract,
+internetservice
+from billing
+JOIN services using (customerid)
+Group by internetservice, contract
+
+
+-- Q11 Rank customers by monthly charges within each contract type
+
+Select 
+customerid,
+monthlycharges, 
+contract,
+Rank() over(PARTITION BY contract ORDER BY monthlycharges DESC) as customer_rank
+from billing
+Order by Contract, customer_rank
+
+
+-- Q12 Find the top 10% of customers by total charges — what is their churn rate?
+
+
+with ranked as(
+	Select
+	customerid,
+	totalcharges,
+	NTILE(10) OVER(ORDER BY totalcharges DESC) as bucket	
+	From billing
+)
+Select Count(*) as "Total Customers",
+SUM(CASE WHEN churn = 'Yes' THEN 1 ELSE 0 END) AS "Churned",
+ROUND(100.0 * SUM(CASE WHEN churn = 'Yes' THEN 1 ELSE 0 END) / COUNT(*), 2) AS "Churn Rate %"
+FROM ranked JOIN billing using (customerid)
+Where bucket = 1
+
+-- Q13 Calculate the churn rate for each tenure bucket (new, developing, mature, loyal)
+
+with segments as(
+	SELECT
+	customerid,
+	tenure,
+	churn,
+	CASE 
+		WHEN tenure BETWEEN 0 AND 12 THEN 'New'
+		WHEN tenure BETWEEN 13 AND 24 THEN 'Developing'
+		WHEN tenure BETWEEN 25 AND 48 THEN 'Mature'
+		ELSE 'Loyal'
+	END AS tenure_segment
+	FROM customers JOIN billing using (customerid)
+)
+
+SELECT
+tenure_segment,
+SUM(CASE WHEN churn = 'Yes' THEN 1 ELSE 0 END) AS "Churned",
+SUM(CASE WHEN churn = 'No' THEN 1 ELSE 0 END) AS "Not Churned",
+ROUND(100.0 * SUM(CASE WHEN churn = 'Yes' THEN 1 ELSE 0 END) / COUNT(*), 2) AS "Churn Rate %"
+FROM Segments 
+Group by tenure_segment
+ORDER by "Churn Rate %" DESC
+
+
+-- Q14 For each payment method, find the average monthly charges and how it compares to the overall average
+
+
+SELECT 
+paymentmethod,
+ROUND(AVG(monthlycharges)::numeric, 2) AS "Avg Monthly Charges",
+ROUND(AVG(AVG(monthlycharges)) OVER()::numeric, 2) AS "Overall Average"
+FROM billing
+GROUP BY paymentmethod
+ORDER BY "Avg Monthly Charges" DESC
+
+
+
+-- Q15 Find customers whose monthly charges are higher than the average of their contract type group
+
+
+SELECT customerid, contract, monthlycharges
+FROM billing b1
+WHERE monthlycharges > (
+    SELECT AVG(monthlycharges) 
+    FROM billing b2 
+    WHERE b2.contract = b1.contract
+)
+
+
+
+
+
+
