@@ -182,8 +182,8 @@ SHAP values reveal the most important features driving churn predictions:
 ## 👤 Author
 
 **Your Name**
-- LinkedIn: [linkedin.com/in/yourprofile](www.linkedin.com/in/abhishek-khandge)
-- GitHub: [github.com/yourusername](https://github.com/Termu-101)
+- LinkedIn: [linkedin](www.linkedin.com/in/abhishek-khandge)
+- GitHub: [github](https://github.com/Termu-101)
 
 ---
 
