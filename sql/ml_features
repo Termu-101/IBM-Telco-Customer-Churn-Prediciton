@@ -1,0 +1,49 @@
+
+-- We will Join the Data for Machine Learning Predicitons for that
+-- We will combine all the three tables and perform some feature engineering
+-- tenure_segment — buckets customers into New, Developing, Mature, Loyal
+-- total_services — counts how many additional services each customer has
+-- avg_revenue_per_month — totalcharges divided by tenure, smoothed with NULLIF to avoid division by zero
+
+
+CREATE VIEW ml_feature AS
+WITH tenure_seg AS (
+    SELECT customerid, tenure,
+    CASE 
+        WHEN tenure BETWEEN 0 AND 12 THEN 'New'
+        WHEN tenure BETWEEN 13 AND 24 THEN 'Developing'
+        WHEN tenure BETWEEN 25 AND 48 THEN 'Mature'
+        ELSE 'Loyal'
+    END AS tenure_segment
+    FROM customers
+),
+service_count AS (
+    SELECT customerid,
+    (CASE WHEN phoneservice = 'Yes' THEN 1 ELSE 0 END +
+     CASE WHEN internetservice != 'No' THEN 1 ELSE 0 END +
+     CASE WHEN streamingtv = 'Yes' THEN 1 ELSE 0 END +
+     CASE WHEN streamingmovies = 'Yes' THEN 1 ELSE 0 END +
+     CASE WHEN onlinesecurity = 'Yes' THEN 1 ELSE 0 END +
+     CASE WHEN techsupport = 'Yes' THEN 1 ELSE 0 END) AS total_services
+    FROM services
+),
+revenue AS (
+    SELECT customerid,
+    ROUND((NULLIF(TRIM(totalcharges), '')::numeric / NULLIF(tenure, 0)), 2) AS avg_revenue_per_month
+    FROM customers c
+    JOIN billing b USING (customerid)
+)
+SELECT 
+    c.customerid, c.gender, c.seniorcitizen, c.partner, 
+    c.dependents, c.tenure, b.churn,
+    t.tenure_segment,
+    s.total_services,
+    r.avg_revenue_per_month,
+    b.contract, b.paymentmethod, b.monthlycharges, b.totalcharges
+FROM customers c
+JOIN billing b USING (customerid)
+JOIN tenure_seg t USING (customerid)
+JOIN service_count s USING (customerid)
+JOIN revenue r USING (customerid);
+
+
